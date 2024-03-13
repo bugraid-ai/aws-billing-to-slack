@@ -53,7 +53,8 @@ def lambda_handler(event, context):
 
     slack_hook_url = os.environ.get('SLACK_WEBHOOK_URL')
     if slack_hook_url:
-        publish_slack(slack_hook_url, summary, buffer)
+        user_ids = ['U06J131GL2U']  # List of user IDs to tag
+        publish_slack(slack_hook_url, summary, buffer, user_ids)
 
     teams_hook_url = os.environ.get('TEAMS_WEBHOOK_URL')
     if teams_hook_url:
@@ -219,12 +220,19 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
     return summary, buffer, cost_per_day_by_service
 
 
-def publish_slack(hook_url, summary, buffer):
+def publish_slack(hook_url, summary, buffer, user_ids=None):
+    if user_ids is None:
+        user_ids = ['U06J131GL2U']  # List of user IDs to tag, e.g., ['@user1', '@user2']
 
+    # Construct the message text including user mentions
+    tagged_users = ' '.join(user_ids)
+    message_text = f"{tagged_users}\n{summary}\n\n```\n{buffer}\n```"
+
+    # Post the message to Slack
     resp = requests.post(
         hook_url,
         json={
-            "text": summary + "\n\n```\n" + buffer + "\n```",
+            "text": message_text,
         }
     )
 
@@ -262,28 +270,6 @@ if __name__ == "__main__":
         example_result = json.load(f)
     with open("example_boto3_result2.json", "r") as f:
         example_result2 = json.load(f)
-
-    # summary, buffer, data = report_cost(group_by="LINKED_ACCOUNT")
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="REGION")
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="USAGE_TYPE", length=20)
-    # print(summary)
-    # print(buffer)
-    #
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=20)
-    # print(summary)
-    # print(buffer)
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=5, cost_aggregation="UnblendedCost")
-    # print(summary)
-    # print(buffer)
-    # summary, buffer, data = report_cost(group_by="SERVICE", length=5, cost_aggregation="AmortizedCost")
-    # print(summary)
-    # print(buffer)
 
     # New Method with 2 example jsons
     summary, buffer, cost_dict = report_cost(None, None, "UnblendedCost", example_result, yesterday="2021-08-23", new_method=True)
