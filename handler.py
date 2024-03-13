@@ -209,12 +209,12 @@ def report_cost(group_by: str = "SERVICE", length: int = 5, cost_aggregation: st
         else:
             emoji = ":warning:"
 
-        summary = (f"{emoji} Yesterday's cost for {account_name} ${total_costs[-1]:,.2f} "
+        summary = (f"{emoji} Yesterday's cost for {account_name} ${total_costs[-1]:,.2f} @Rajat "
                    f"is {relative_to_budget:.2f}% of credit budget "
                    f"${allowed_credits_per_day:,.2f} for the day."
                   )
     else:
-        summary = f"Yesterday's cost for account {account_name} was ${total_costs[-1]:,.2f}"
+        summary = f"Yesterday's cost for account {account_name} was ${total_costs[-1]:,.2f} @Rajat"
 
     return summary, buffer, cost_per_day_by_service
 
