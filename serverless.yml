@@ -2,10 +2,22 @@ service: aws-billing-to-slack
 
 plugins:
   - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    layer: false
+    fileName: requirements.txt
+    usePipenv: false
+    pythonBin: python3
+    slim: true
+    strip: false
+
 package:
   exclude:
     - node_modules/**
     - venv/**
+    - .serverless/**
 provider:
   name: aws
   # Sane defaults, easy for multi-account/multi-region organizations
@@ -25,6 +37,11 @@ provider:
           Action:
             - "iam:ListAccountAliases"
           Resource: "*"
+          # Needed to get account ID
+        - Effect: "Allow"
+          Action:
+            - "sts:GetCallerIdentity"
+          Resource: "*"
 
 functions:
   report_cost:
@@ -32,9 +49,9 @@ functions:
 
     description: Send account daily billing data to Slack/Teams
 
-    # Keep costs minimal
-    memorySize: 128
-    timeout: 10
+    # Keep costs minimal but allow enough time for API calls
+    memorySize: 256
+    timeout: 30
 
     events:
       # Every day at 15:00 UTC / 10am CDT
@@ -44,8 +61,12 @@ functions:
       GROUP_BY: ${param:group, 'SERVICE'}
       LENGTH: ${param:group_length, 10}
       SLACK_WEBHOOK_URL: ${param:slack_url, ''}
+      SLACK_USER_IDS: ${param:slack_user_ids, ''}
+      SLACK_MENTION_HERE: ${param:slack_mention_here, 'false'}
       TEAMS_WEBHOOK_URL: ${param:teams_url, ''}
+      GOOGLE_WEBHOOK_URL: ${param:google_url, ''}
       AWS_ACCOUNT_NAME: ${param:aws_account, ''}
       CREDITS_EXPIRE_DATE: ${param:credits_expire_date, ''}
       CREDITS_REMAINING_AS_OF: ${param:credits_remaining_date, ''}
       CREDITS_REMAINING: ${param:credits_remaining, ''}
+      COST_AGGREGATION: ${param:cost_aggregation, 'UnblendedCost'}
